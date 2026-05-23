@@ -397,6 +397,51 @@ let miniRets = [];
 let mrCounter = 0;
 let chart = null;
 
+// ── LocalStorage persistence ────────────────────────────────
+const STORAGE_KEY = 'miniRetPlanner_v1';
+
+function saveToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      currentAge:          document.getElementById('currentAge').value,
+      retireAge:           document.getElementById('retireAge').value,
+      currentInvestments:  document.getElementById('currentInvestments').value,
+      annualSpending:      document.getElementById('annualSpending').value,
+      retireSpendPct:      document.getElementById('retireSpendPct').value,
+      savingsOn:           document.getElementById('savingsToggle').checked,
+      annualSavings:       document.getElementById('annualSavings').value,
+      miniRets,
+      mrCounter,
+    }));
+  } catch (e) { /* storage unavailable */ }
+}
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+
+    if (d.currentAge         != null) document.getElementById('currentAge').value         = d.currentAge;
+    if (d.retireAge          != null) document.getElementById('retireAge').value          = d.retireAge;
+    if (d.currentInvestments != null) document.getElementById('currentInvestments').value = d.currentInvestments;
+    if (d.annualSpending     != null) document.getElementById('annualSpending').value     = d.annualSpending;
+    if (d.retireSpendPct     != null) document.getElementById('retireSpendPct').value     = d.retireSpendPct;
+    if (d.annualSavings      != null) document.getElementById('annualSavings').value      = d.annualSavings;
+
+    if (d.savingsOn) {
+      document.getElementById('savingsToggle').checked = true;
+      document.getElementById('savingsInputWrap').classList.add('visible');
+    }
+
+    if (Array.isArray(d.miniRets)) {
+      miniRets  = d.miniRets;
+      mrCounter = d.mrCounter ?? 0;
+    }
+  } catch (e) { /* corrupt data — silently skip */ }
+}
+// ────────────────────────────────────────────────────────────
+
 function fmt(n) {
   const abs = Math.abs(n);
   const sign = n < 0 ? '-' : '';
@@ -556,6 +601,7 @@ function recalc() {
 
   renderTimeline(curAge, retAge, miniRets);
   renderChart(rows, fireNum, curAge, retAge, fireAge);
+  saveToStorage();
 }
 
 function renderTimeline(curAge, retAge, mrs) {
@@ -788,6 +834,7 @@ document.getElementById('savingsToggle').addEventListener('change', function() {
   recalc();
 });
 
+loadFromStorage();
 renderMiniRets();
 recalc();
 </script>
