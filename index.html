@@ -50,6 +50,27 @@
     --blue-dim: rgba(79,168,255,0.12);
     --purple: #a78bfa;
   }
+  [data-theme="light"] {
+    --bg: #f5f6fb;
+    --surface: #ffffff;
+    --surface2: #eef0f7;
+    --border: #dde1ee;
+    --border2: #c8cedf;
+    --text: #181b2e;
+    --text-muted: #737a9e;
+    --text-dim: #b8bdd0;
+    --accent: #059669;
+    --accent-dim: rgba(5,150,105,0.10);
+    --accent-glow: rgba(5,150,105,0.20);
+    --danger: #dc2626;
+    --danger-dim: rgba(220,38,38,0.10);
+    --warn: #d97706;
+    --warn-dim: rgba(217,119,6,0.10);
+    --blue: #2563eb;
+    --blue-dim: rgba(37,99,235,0.10);
+    --purple: #7c3aed;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: var(--bg);
@@ -94,6 +115,27 @@
   .status-safe { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-glow); }
   .status-warn { background: var(--warn-dim); color: var(--warn); border: 1px solid rgba(255,184,79,0.3); }
   .status-danger { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(255,79,107,0.3); }
+
+  .theme-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .theme-toggle:hover { color: var(--text); border-color: var(--border2); }
+
+  /* smooth theme transition on key surfaces */
+  body, .header, .left-panel, .right-panel, .stat-card,
+  .mini-ret-card, .stats-bar, .chart-area, .timeline-wrap,
+  input[type="number"], select, .toggle-slider { transition: background-color 0.25s, border-color 0.25s, color 0.25s; }
 
   .app { display: grid; grid-template-columns: 360px 1fr; min-height: calc(100vh - 61px); }
 
@@ -547,6 +589,20 @@
     <div class="header-sub">7% annual growth · 4% withdrawal rate · Life expectancy 100</div>
   </div>
   <div style="display:flex;align-items:center;gap:10px">
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light / dark mode">
+      <!-- Sun: visible in dark mode -->
+      <svg id="iconSun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      <!-- Moon: visible in light mode -->
+      <svg id="iconMoon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
     <button class="btn-tutorial-help" id="btnTutorialHelp" onclick="openTutorial()" title="How to use this tool">?</button>
     <div class="status-pill status-safe" id="statusPill">● ON TRACK</div>
   </div>
@@ -962,11 +1018,11 @@ function renderChart(rows, fireNum, curAge, retAge, fireAge) {
   // Color segments
   const segColor = (i) => {
     const r = rows[i];
-    if (!r) return 'rgba(79,168,255,0.9)';
-    if (r.depleted || r.value === 0) return 'rgba(255,79,107,0.8)';
-    if (r.phase === 'mini') return 'rgba(167,139,250,0.9)';
-    if (r.phase === 'retire') return 'rgba(79,255,176,0.9)';
-    return 'rgba(79,168,255,0.9)';
+    if (!r) return cBlue;
+    if (r.depleted || r.value === 0) return cDanger;
+    if (r.phase === 'mini') return cPurple;
+    if (r.phase === 'retire') return cAccent;
+    return cBlue;
   };
 
   const phaseBgPlugin = {
@@ -982,13 +1038,13 @@ function renderChart(rows, fireNum, curAge, retAge, fireAge) {
         ctx.fillStyle = color;
         ctx.fillRect(Math.min(x1,x2), ca.top, Math.abs(x2-x1), ca.bottom-ca.top);
       };
-      fill(curAge, retAge, 'rgba(79,168,255,0.03)');
+      fill(curAge, retAge, light ? 'rgba(37,99,235,0.04)'   : 'rgba(79,168,255,0.03)');
       miniRets.forEach(m => {
         if (m.startAge < retAge && m.endAge > curAge) {
-          fill(Math.max(m.startAge,curAge), Math.min(m.endAge,retAge), 'rgba(167,139,250,0.07)');
+          fill(Math.max(m.startAge,curAge), Math.min(m.endAge,retAge), light ? 'rgba(109,40,217,0.06)' : 'rgba(167,139,250,0.07)');
         }
       });
-      fill(retAge, 100, 'rgba(79,255,176,0.03)');
+      fill(retAge, 100, light ? 'rgba(5,150,105,0.04)' : 'rgba(79,255,176,0.03)');
 
       // vertical lines at transitions
       const vline = (age, color) => {
@@ -999,10 +1055,10 @@ function renderChart(rows, fireNum, curAge, retAge, fireAge) {
         ctx.beginPath(); ctx.moveTo(x, ca.top); ctx.lineTo(x, ca.bottom); ctx.stroke();
         ctx.setLineDash([]);
       };
-      vline(retAge, 'rgba(79,255,176,0.25)');
+      vline(retAge, light ? 'rgba(5,150,105,0.35)' : 'rgba(79,255,176,0.25)');
       miniRets.forEach(m => {
-        if (m.startAge > curAge && m.startAge < retAge) vline(m.startAge, 'rgba(167,139,250,0.3)');
-        if (m.endAge > curAge && m.endAge < retAge) vline(m.endAge, 'rgba(167,139,250,0.3)');
+        if (m.startAge > curAge && m.startAge < retAge) vline(m.startAge, light ? 'rgba(109,40,217,0.35)' : 'rgba(167,139,250,0.3)');
+        if (m.endAge > curAge && m.endAge < retAge) vline(m.endAge, light ? 'rgba(109,40,217,0.35)' : 'rgba(167,139,250,0.3)');
       });
 
       // FIRE reached indicator
@@ -1010,13 +1066,13 @@ function renderChart(rows, fireNum, curAge, retAge, fireAge) {
         const fx = xsc.getPixelForValue(fireAge);
         // Bold solid line
         ctx.save();
-        ctx.strokeStyle = 'rgba(79,255,176,0.85)';
+        ctx.strokeStyle = light ? 'rgba(5,150,105,0.9)' : 'rgba(79,255,176,0.85)';
         ctx.lineWidth = 2;
         ctx.setLineDash([]);
         ctx.beginPath(); ctx.moveTo(fx, ca.top); ctx.lineTo(fx, ca.bottom); ctx.stroke();
 
         // Star / circle marker at top
-        ctx.fillStyle = '#4fffb0';
+        ctx.fillStyle = light ? '#059669' : '#4fffb0';
         ctx.beginPath();
         ctx.arc(fx, ca.top + 10, 5, 0, Math.PI * 2);
         ctx.fill();
@@ -1029,8 +1085,8 @@ function renderChart(rows, fireNum, curAge, retAge, fireAge) {
         const lx = Math.min(fx + 10, ca.right - tw - px * 2 - 4);
         const ly = ca.top + 4;
         // pill bg
-        ctx.fillStyle = 'rgba(13,15,20,0.88)';
-        ctx.strokeStyle = 'rgba(79,255,176,0.6)';
+        ctx.fillStyle = light ? 'rgba(255,255,255,0.95)' : 'rgba(13,15,20,0.88)';
+        ctx.strokeStyle = light ? 'rgba(5,150,105,0.6)' : 'rgba(79,255,176,0.6)';
         ctx.lineWidth = 1;
         const r2 = 3;
         const bx = lx, by = ly, bw = tw + px*2, bh = 18;
@@ -1046,12 +1102,28 @@ function renderChart(rows, fireNum, curAge, retAge, fireAge) {
         ctx.closePath();
         ctx.fill(); ctx.stroke();
         // pill text
-        ctx.fillStyle = '#4fffb0';
+        ctx.fillStyle = light ? '#059669' : '#4fffb0';
         ctx.fillText(label, lx + px, ly + 13);
         ctx.restore();
       }
     }
   };
+
+  // Theme-aware chart colours
+  const light = isLight();
+  const cGrid    = light ? 'rgba(0,0,0,0.06)'   : 'rgba(255,255,255,0.04)';
+  const cAxis    = light ? '#dde1ee'             : '#252a38';
+  const cTick    = light ? '#737a9e'             : '#6b7394';
+  const cTipBg   = light ? '#ffffff'             : '#1a1e2a';
+  const cTipBdr  = light ? '#dde1ee'             : '#252a38';
+  const cTipTtl  = light ? '#737a9e'             : '#6b7394';
+  const cTipBody = light ? '#181b2e'             : '#e8ecf4';
+  const cAccent  = light ? 'rgba(5,150,105,0.9)' : 'rgba(79,255,176,0.9)';
+  const cBlue    = light ? 'rgba(37,99,235,0.9)' : 'rgba(79,168,255,0.9)';
+  const cPurple  = light ? 'rgba(109,40,217,0.9)': 'rgba(167,139,250,0.9)';
+  const cDanger  = light ? 'rgba(220,38,38,0.8)' : 'rgba(255,79,107,0.8)';
+  const cFireLine= light ? 'rgba(5,150,105,0.4)' : 'rgba(79,255,176,0.35)';
+  const cFillTop = light ? 'rgba(37,99,235,0.08)': 'rgba(79,168,255,0.12)';
 
   if (chart) chart.destroy();
   const ctx = document.getElementById('portfolioChart').getContext('2d');
@@ -1077,7 +1149,7 @@ function renderChart(rows, fireNum, curAge, retAge, fireAge) {
             const { chartArea } = ch;
             if (!chartArea) return 'transparent';
             const g = ch.ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-            g.addColorStop(0, 'rgba(79,168,255,0.12)');
+            g.addColorStop(0, cFillTop);
             g.addColorStop(1, 'rgba(79,168,255,0.01)');
             return g;
           },
@@ -1087,7 +1159,7 @@ function renderChart(rows, fireNum, curAge, retAge, fireAge) {
           data: fireData,
           borderWidth: 1.5,
           borderDash: [6,4],
-          borderColor: 'rgba(79,255,176,0.35)',
+          borderColor: cFireLine,
           backgroundColor: 'transparent',
           pointRadius: 0,
           fill: false,
@@ -1104,10 +1176,10 @@ function renderChart(rows, fireNum, curAge, retAge, fireAge) {
         x: {
           type: 'linear',
           min: curAge, max: 100,
-          grid: { color: 'rgba(255,255,255,0.04)', drawTicks: false },
-          border: { color: '#252a38' },
+          grid: { color: cGrid, drawTicks: false },
+          border: { color: cAxis },
           ticks: {
-            color: '#6b7394',
+            color: cTick,
             font: { family: 'DM Mono', size: 10 },
             maxTicksLimit: 14,
             callback: v => 'Age ' + v
@@ -1115,10 +1187,10 @@ function renderChart(rows, fireNum, curAge, retAge, fireAge) {
         },
         y: {
           min: 0,
-          grid: { color: 'rgba(255,255,255,0.04)', drawTicks: false },
-          border: { color: '#252a38' },
+          grid: { color: cGrid, drawTicks: false },
+          border: { color: cAxis },
           ticks: {
-            color: '#6b7394',
+            color: cTick,
             font: { family: 'DM Mono', size: 10 },
             callback: v => fmtAxis(v)
           }
@@ -1127,11 +1199,11 @@ function renderChart(rows, fireNum, curAge, retAge, fireAge) {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#1a1e2a',
-          borderColor: '#252a38',
+          backgroundColor: cTipBg,
+          borderColor: cTipBdr,
           borderWidth: 1,
-          titleColor: '#6b7394',
-          bodyColor: '#e8ecf4',
+          titleColor: cTipTtl,
+          bodyColor: cTipBody,
           titleFont: { family: 'DM Mono', size: 10 },
           bodyFont: { family: 'DM Mono', size: 12 },
           padding: 12,
@@ -1399,6 +1471,30 @@ window.addEventListener('resize', () => {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeTutorial();
 });
+
+// ── Theme ──────────────────────────────────────────────────
+function isLight() { return document.documentElement.dataset.theme === 'light'; }
+
+function toggleTheme() {
+  const light = !isLight();
+  document.documentElement.dataset.theme = light ? 'light' : '';
+  document.getElementById('iconSun').style.display  = light ? 'none' : '';
+  document.getElementById('iconMoon').style.display = light ? '' : 'none';
+  localStorage.setItem('theme', light ? 'light' : 'dark');
+  recalc();
+}
+
+// Apply saved / system preference on load
+(function applyTheme() {
+  const saved = localStorage.getItem('theme');
+  const preferLight = saved ? saved === 'light'
+                             : window.matchMedia('(prefers-color-scheme: light)').matches;
+  if (preferLight) {
+    document.documentElement.dataset.theme = 'light';
+    document.getElementById('iconSun').style.display  = 'none';
+    document.getElementById('iconMoon').style.display = '';
+  }
+})();
 
 // Wire all inputs
 document.querySelectorAll('input[type="number"]').forEach(el => {
