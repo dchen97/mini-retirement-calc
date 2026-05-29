@@ -26,6 +26,13 @@ The dashboard runs a **year-by-year portfolio simulation** from your current age
 - **Optional annual savings** — toggle on to add yearly contributions during working years
 - **Multiple mini retirements** — add as many as you want, each with independent start/end ages and a spending level slider
 
+## Definitions
+
+| Term | Definition |
+|---|---|
+| **Retirement** | The point after which you plan to have no (or little) outside income beyond the appreciation of your investments. |
+| **Mini Retirement** | A defined span of time during which you similarly have no (or little) outside income beyond investment appreciation, before eventually returning to work. |
+
 ## Assumptions
 
 | Parameter | Value |

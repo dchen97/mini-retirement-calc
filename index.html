@@ -254,6 +254,155 @@
   .seg-work { background: rgba(79,168,255,0.18); color: var(--blue); }
   .seg-mini { background: rgba(167,139,250,0.28); color: var(--purple); border-left: 2px solid rgba(167,139,250,0.5); border-right: 2px solid rgba(167,139,250,0.5); }
   .seg-retire { background: rgba(79,255,176,0.12); color: var(--accent); border-left: 2px solid rgba(79,255,176,0.3); }
+
+  /* ── Info icons ──────────────────────────────────────────── */
+  .info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    font-size: 9px;
+    font-family: 'DM Mono', monospace;
+    font-style: normal;
+    color: var(--text-dim);
+    border: 1px solid var(--border2);
+    cursor: pointer;
+    vertical-align: middle;
+    margin-left: 4px;
+    transition: color 0.15s, border-color 0.15s;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .info-icon:hover, .info-icon.active { color: var(--accent); border-color: var(--accent-glow); }
+
+  /* Shared tooltip popover — body-level so it's never clipped */
+  .tip-pop {
+    position: fixed;
+    z-index: 9000;
+    max-width: 240px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-left: 2px solid var(--accent);
+    border-radius: 5px;
+    padding: 9px 12px;
+    font-size: 11px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text-muted);
+    line-height: 1.55;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.45), 0 0 0 1px var(--accent-glow);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  .tip-pop.visible { opacity: 1; }
+
+  /* ── Guided tour ─────────────────────────────────────────── */
+  /* Click-sink overlay — sits behind the spotlight box-shadow */
+  #tourOverlay {
+    position: fixed; inset: 0; z-index: 7998;
+    display: none; cursor: default;
+  }
+  #tourOverlay.active { display: block; }
+
+  /* Spotlight: transparent box, huge box-shadow creates the vignette */
+  #tourSpotlight {
+    position: fixed; z-index: 7999; pointer-events: none;
+    border-radius: 8px;
+    border: 1.5px solid var(--accent);
+    box-shadow: 0 0 0 9999px rgba(13,15,20,0.84), 0 0 0 4px var(--accent-glow);
+    display: none;
+    transition: top 0.32s cubic-bezier(.4,0,.2,1),
+                left 0.32s cubic-bezier(.4,0,.2,1),
+                width 0.32s cubic-bezier(.4,0,.2,1),
+                height 0.32s cubic-bezier(.4,0,.2,1);
+  }
+  #tourSpotlight.active { display: block; }
+
+  /* Floating tooltip card */
+  #tourCard {
+    position: fixed; z-index: 8000;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 18px 20px 14px;
+    width: 290px; max-width: calc(100vw - 24px);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.65);
+    display: none;
+    transition: top 0.32s cubic-bezier(.4,0,.2,1),
+                left 0.32s cubic-bezier(.4,0,.2,1);
+  }
+  #tourCard.active { display: block; }
+  #tourCard.centered {
+    width: 400px;
+    border-top: 2px solid var(--accent);
+    top: 50% !important; left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    transition: none;
+  }
+
+  /* Directional arrow — hidden by default, shown only when a direction class is present */
+  #tourCard::before {
+    content: none;
+    position: absolute;
+    width: 10px; height: 10px;
+    background: var(--surface);
+    transform: rotate(45deg);
+  }
+  #tourCard.arrow-left::before,
+  #tourCard.arrow-right::before,
+  #tourCard.arrow-top::before,
+  #tourCard.arrow-bottom::before { content: ''; }
+  #tourCard.arrow-left::before  { left: -6px;  top: 22px; border-left: 1px solid var(--border2); border-bottom: 1px solid var(--border2); }
+  #tourCard.arrow-right::before { right: -6px; top: 22px; border-right: 1px solid var(--border2); border-top: 1px solid var(--border2); }
+  #tourCard.arrow-top::before   { top: -6px;  left: 22px; border-left: 1px solid var(--border2); border-top: 1px solid var(--border2); }
+  #tourCard.arrow-bottom::before{ bottom: -6px; left: 22px; border-right: 1px solid var(--border2); border-bottom: 1px solid var(--border2); }
+
+  .tour-heading {
+    font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500;
+    color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .tour-body { font-size: 12px; color: var(--text-muted); line-height: 1.65; }
+  .tour-body p { margin-bottom: 8px; }
+  .tour-body p:last-child { margin-bottom: 0; }
+  .tour-body strong { color: var(--text); font-weight: 500; }
+  .tour-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border);
+  }
+  .tour-dots { display: flex; gap: 5px; align-items: center; }
+  .tour-dots span {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--border2); transition: all 0.2s;
+  }
+  .tour-dots span.active { background: var(--accent); width: 14px; border-radius: 3px; }
+  .tour-nav { display: flex; gap: 7px; align-items: center; }
+  .btn-tour-prev, .btn-tour-next {
+    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.07em;
+    padding: 5px 11px; border-radius: 4px; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-tour-prev { background: none; border: 1px solid var(--border2); color: var(--text-muted); }
+  .btn-tour-prev:hover { border-color: var(--text-dim); color: var(--text); }
+  .btn-tour-next { background: var(--accent-dim); border: 1px solid var(--accent-glow); color: var(--accent); }
+  .btn-tour-next:hover { background: rgba(79,255,176,0.2); border-color: var(--accent); }
+  .btn-tour-prev[hidden] { display: none; }
+  .btn-tour-skip {
+    font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-dim);
+    background: none; border: none; cursor: pointer; padding: 0;
+    text-decoration: underline; text-underline-offset: 2px; transition: color 0.15s;
+  }
+  .btn-tour-skip:hover { color: var(--text-muted); }
+
+  /* ? help button in header */
+  .btn-tutorial-help {
+    background: none; border: 1px solid var(--border2); color: var(--text-dim);
+    font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500;
+    width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
+    transition: all 0.15s; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .btn-tutorial-help:hover { color: var(--accent); border-color: var(--accent-glow); }
 </style>
 </head>
 <body>
@@ -263,7 +412,10 @@
     <div class="header-title">Mini Retirement Planner</div>
     <div class="header-sub">7% annual growth · 4% withdrawal rate · Life expectancy 100</div>
   </div>
-  <div class="status-pill status-safe" id="statusPill">● ON TRACK</div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="btn-tutorial-help" id="btnTutorialHelp" onclick="openTutorial()" title="How to use this tool">?</button>
+    <div class="status-pill status-safe" id="statusPill">● ON TRACK</div>
+  </div>
 </div>
 
 <div class="app">
@@ -274,11 +426,11 @@
       <div class="section-label">Personal</div>
       <div class="input-row">
         <div class="input-group">
-          <label>Current Age</label>
+          <label>Current Age <span class="info-icon" data-tip="Your age today. Used as the starting point for the simulation.">ⓘ</span></label>
           <input type="number" id="currentAge" value="32" min="18" max="79">
         </div>
         <div class="input-group">
-          <label>Retirement Age</label>
+          <label>Retirement Age <span class="info-icon" data-tip="The age after which you plan to have no (or little) outside income beyond the appreciation of your investments.">ⓘ</span></label>
           <input type="number" id="retireAge" value="60" min="30" max="85">
         </div>
       </div>
@@ -287,21 +439,21 @@
     <div>
       <div class="section-label">Finances</div>
       <div class="input-group">
-        <label>Current Investments</label>
+        <label>Current Investments <span class="info-icon" data-tip="The total value of your invested assets today (brokerage, 401k, IRA, etc.).">ⓘ</span></label>
         <div class="input-wrap has-prefix">
           <span class="input-prefix">$</span>
           <input type="number" id="currentInvestments" value="150000" min="0" step="5000">
         </div>
       </div>
       <div class="input-group">
-        <label>Current Annual Spending</label>
+        <label>Current Annual Spending <span class="info-icon" data-tip="How much you spend per year right now, including all living expenses.">ⓘ</span></label>
         <div class="input-wrap has-prefix">
           <span class="input-prefix">$</span>
           <input type="number" id="annualSpending" value="60000" min="0" step="1000">
         </div>
       </div>
       <div class="input-group">
-        <label>Retirement Spending — <span id="retireSpendVal" style="color:var(--accent)">80%</span> of current</label>
+        <label>Retirement Spending — <span id="retireSpendVal" style="color:var(--accent)">80%</span> of current <span class="info-icon" data-tip="How much you expect to spend in retirement as a % of your current spending. The 4% rule is applied to this number to calculate your FIRE number.">ⓘ</span></label>
         <div class="range-row">
           <input type="range" id="retireSpendPct" min="40" max="130" value="80">
           <span class="range-val" id="retireAnnualAmt">—</span>
@@ -311,7 +463,7 @@
 
     <div class="savings-section">
       <div class="toggle-row">
-        <span class="toggle-label">Add annual savings (work years)</span>
+        <span class="toggle-label">Add annual savings (work years) <span class="info-icon" data-tip="Optional. The amount you invest per year during working years. Accelerates portfolio growth.">ⓘ</span></span>
         <label class="toggle">
           <input type="checkbox" id="savingsToggle">
           <span class="toggle-slider"></span>
@@ -342,22 +494,22 @@
   <div class="right-panel">
     <div class="stats-bar">
       <div class="stat-card c-green">
-        <div class="stat-label">FIRE Number</div>
+        <div class="stat-label">FIRE Number <span class="info-icon" data-tip="The portfolio size you need at retirement to safely fund your spending forever, using the 4% withdrawal rule (annual spend ÷ 0.04).">ⓘ</span></div>
         <div class="stat-value" id="fireNumber">—</div>
         <div class="stat-sub">Needed at retirement</div>
       </div>
       <div class="stat-card c-blue">
-        <div class="stat-label">Portfolio at Retirement</div>
+        <div class="stat-label">Portfolio at Retirement <span class="info-icon" data-tip="Your projected portfolio value the year you hit your retirement age.">ⓘ</span></div>
         <div class="stat-value" id="retireBalance">—</div>
         <div class="stat-sub">Projected value</div>
       </div>
       <div class="stat-card c-purple">
-        <div class="stat-label">Mini Ret. Cost</div>
+        <div class="stat-label">Mini Ret. Cost <span class="info-icon" data-tip="How much smaller your retirement portfolio is compared to if you never took any mini retirements.">ⓘ</span></div>
         <div class="stat-value" id="miniRetCost">—</div>
         <div class="stat-sub">Lost vs. no mini rets</div>
       </div>
       <div class="stat-card c-dynamic">
-        <div class="stat-label">Surplus / Deficit</div>
+        <div class="stat-label">Surplus / Deficit <span class="info-icon" data-tip="The gap between your projected portfolio at retirement and your FIRE number. Positive = you'll overshoot. Negative = you'll fall short.">ⓘ</span></div>
         <div class="stat-value" id="surplusVal">—</div>
         <div class="stat-sub">vs. FIRE number</div>
       </div>
@@ -391,6 +543,24 @@
     </div>
   </div>
 </div>
+
+<!-- Guided spotlight tour -->
+<div id="tourOverlay" onclick="closeTutorial()"></div>
+<div id="tourSpotlight"></div>
+<div id="tourCard" role="dialog" aria-modal="true" onclick="event.stopPropagation()">
+  <div id="tourContent"></div>
+  <div class="tour-footer">
+    <div class="tour-dots" id="tourDots"></div>
+    <div class="tour-nav">
+      <button class="btn-tour-skip" onclick="closeTutorial()">Skip</button>
+      <button class="btn-tour-prev" id="tourPrev" onclick="tourNav(-1)" hidden>← Back</button>
+      <button class="btn-tour-next" id="tourNext">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Shared tooltip popover (body-level, never clipped) -->
+<div class="tip-pop" id="tipPop" role="tooltip"></div>
 
 <script>
 let miniRets = [];
@@ -441,19 +611,19 @@ function renderMiniRets() {
       </div>
       <div class="mini-ret-ages">
         <div class="input-group" style="margin:0">
-          <label>Start Age</label>
+          <label>Start Age <span class="info-icon" data-tip="The age at which this career break begins — a period where you plan to have no (or little) outside income beyond investment appreciation.">ⓘ</span></label>
           <input type="number" value="${m.startAge}" min="18" max="84"
             onchange="miniRets.find(x=>x.id===${m.id}).startAge=+this.value;recalc()">
         </div>
         <div class="age-sep">→</div>
         <div class="input-group" style="margin:0">
-          <label>End Age</label>
+          <label>End Age <span class="info-icon" data-tip="The age at which this career break ends and you return to earning outside income.">ⓘ</span></label>
           <input type="number" value="${m.endAge}" min="19" max="85"
             onchange="miniRets.find(x=>x.id===${m.id}).endAge=+this.value;recalc()">
         </div>
       </div>
       <div class="input-group" style="margin:0">
-        <label>Spending vs. current — <span id="sp_${m.id}" style="color:var(--purple)">${m.spendPct}%</span></label>
+        <label>Spending vs. current — <span id="sp_${m.id}" style="color:var(--purple)">${m.spendPct}%</span> <span class="info-icon" data-tip="How much you'll spend during this mini retirement vs. your current spending.">ⓘ</span></label>
         <div class="range-row">
           <input type="range" min="50" max="150" value="${m.spendPct}"
             oninput="document.getElementById('sp_${m.id}').textContent=this.value+'%';miniRets.find(x=>x.id===${m.id}).spendPct=+this.value;recalc()">
@@ -778,6 +948,256 @@ function renderChart(rows, fireNum, curAge, retAge, fireAge) {
   });
 }
 
+// ── Tooltip logic ─────────────────────────────────────────
+function positionTip(icon) {
+  const pop = document.getElementById('tipPop');
+  const r = icon.getBoundingClientRect();
+  const pw = 248; // max-width + a bit of buffer
+  // Prefer above; fall back to right
+  if (r.top > 120) {
+    pop.style.bottom = (window.innerHeight - r.top + 6) + 'px';
+    pop.style.top = 'auto';
+    let left = r.left;
+    if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+    pop.style.left = Math.max(8, left) + 'px';
+  } else {
+    pop.style.top = (r.top - 4) + 'px';
+    pop.style.bottom = 'auto';
+    let left = r.right + 8;
+    if (left + pw > window.innerWidth - 8) left = r.left - pw - 8;
+    pop.style.left = Math.max(8, left) + 'px';
+  }
+}
+
+function showTip(icon) {
+  const pop = document.getElementById('tipPop');
+  pop.textContent = icon.dataset.tip;
+  positionTip(icon);
+  pop.classList.add('visible');
+  icon.classList.add('active');
+}
+
+function hideTip() {
+  document.getElementById('tipPop').classList.remove('visible');
+  const active = document.querySelector('.info-icon.active');
+  if (active) active.classList.remove('active');
+}
+
+// Desktop: hover
+document.addEventListener('mouseover', e => {
+  const icon = e.target.closest('.info-icon');
+  if (icon) showTip(icon);
+});
+document.addEventListener('mouseout', e => {
+  if (e.target.closest('.info-icon')) hideTip();
+});
+// Mobile: tap to toggle; tap elsewhere to close
+document.addEventListener('click', e => {
+  const icon = e.target.closest('.info-icon');
+  if (icon) {
+    e.stopPropagation();
+    const alreadyOpen = icon.classList.contains('active');
+    hideTip();
+    if (!alreadyOpen) showTip(icon);
+    return;
+  }
+  hideTip();
+});
+
+// ── Guided Spotlight Tour ──────────────────────────────────
+let tourStep = 0;
+const TOUR_PAD = 10;
+
+const TOUR_STEPS = [
+  {
+    target: null,
+    position: 'center',
+    heading: 'Simulate Your Path to Freedom',
+    body: `<p>This tool helps you plan <strong>career breaks</strong> — sabbaticals, unpaid parental leave, gap years, extended travel — and shows you exactly how each break affects your long-term financial trajectory.</p>
+<p>It runs a <strong>year-by-year simulation</strong> from today to age 100, modeling 7% annual investment growth and a 4% safe withdrawal rate in retirement.</p>
+<p>Let's take a quick tour. ✦</p>`
+  },
+  {
+    target: '.left-panel > div:first-child',
+    position: 'right',
+    heading: 'Your Timeline',
+    body: `<p><strong>Current Age</strong> is your starting point for the simulation.</p>
+<p><strong>Retirement Age</strong> is when you plan to permanently stop working — the age after which you expect <em>no (or little) outside income</em> beyond the appreciation of your investments.</p>`
+  },
+  {
+    target: '.left-panel > div:nth-child(2)',
+    position: 'right',
+    heading: 'Your Financial Picture',
+    body: `<p><strong>Current Investments</strong> is the total value of all your invested assets today — brokerage, 401(k), IRA, and so on.</p>
+<p><strong>Annual Spending</strong> is your current lifestyle cost. The retirement spending slider adjusts what you expect to spend in retirement as a percentage of that number — your FIRE number is derived from it.</p>`
+  },
+  {
+    target: '.left-panel > div:last-child',
+    position: 'right',
+    heading: 'Add a Career Break',
+    body: `<p>This is the heart of the tool. A <strong>mini retirement</strong> is any stretch of time where you plan to have <em>no (or little) outside income</em> beyond investment appreciation — a sabbatical, gap year, unpaid parental leave — before eventually returning to work.</p>
+<p>Tap <strong>+ ADD MINI RETIREMENT</strong> and watch the chart react in real time.</p>`
+  },
+  {
+    target: '.stats-bar',
+    position: 'bottom',
+    heading: 'Your Key Numbers',
+    body: `<p>The <strong>FIRE Number</strong> is the portfolio size that funds your retirement indefinitely at a 4% annual withdrawal rate (annual retirement spend ÷ 0.04).</p>
+<p><strong>Surplus / Deficit</strong> shows how far above or below your FIRE target you'll land. The status pill at the top updates instantly as you adjust inputs.</p>`
+  },
+  {
+    target: '.chart-wrap',
+    position: 'top',
+    heading: 'Your Full Trajectory',
+    body: `<p>Color-coded by phase: <strong style="color:var(--blue)">blue</strong> = working, <strong style="color:var(--purple)">purple</strong> = mini retirement, <strong style="color:var(--accent)">green</strong> = full retirement, <strong style="color:var(--danger)">red</strong> = depleted.</p>
+<p>The dashed line marks your FIRE number. Where the portfolio crosses it — that's your <strong>FIRE @ age</strong> marker.</p>
+<p>Hover the <strong>ⓘ</strong> icons next to any label for plain-English field help.</p>`
+  }
+];
+
+function positionTourCard() {
+  const step      = TOUR_STEPS[tourStep];
+  const spotlight = document.getElementById('tourSpotlight');
+  const card      = document.getElementById('tourCard');
+
+  card.classList.remove('centered','arrow-left','arrow-right','arrow-top','arrow-bottom');
+
+  if (!step.target) {
+    spotlight.classList.remove('active');
+    card.style.top = '';
+    card.style.left = '';
+    card.style.transform = '';
+    card.classList.add('centered');
+    return;
+  }
+
+  const el = document.querySelector(step.target);
+  if (!el) {
+    spotlight.classList.remove('active');
+    card.style.top = '';
+    card.style.left = '';
+    card.style.transform = '';
+    card.classList.add('centered');
+    return;
+  }
+
+  // Scroll target into view (handles overflow-y:auto left panel)
+  el.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+
+  const r  = el.getBoundingClientRect();
+  const sp = {
+    top:    r.top    - TOUR_PAD,
+    left:   r.left   - TOUR_PAD,
+    width:  r.width  + TOUR_PAD * 2,
+    height: r.height + TOUR_PAD * 2
+  };
+
+  spotlight.style.top    = sp.top    + 'px';
+  spotlight.style.left   = sp.left   + 'px';
+  spotlight.style.width  = sp.width  + 'px';
+  spotlight.style.height = sp.height + 'px';
+  spotlight.classList.add('active');
+
+  const cardW = 290;
+  const cardH = card.offsetHeight || 220;
+  const vw    = window.innerWidth;
+  const vh    = window.innerHeight;
+  const gap   = 16;
+
+  let top, left, arrowClass;
+  const pos = step.position;
+
+  if (pos === 'right' && sp.left + sp.width + gap + cardW < vw) {
+    left = sp.left + sp.width + gap;
+    top  = sp.top + TOUR_PAD;
+    arrowClass = 'arrow-left';
+  } else if (pos === 'left' && sp.left - gap - cardW > 0) {
+    left = sp.left - gap - cardW;
+    top  = sp.top + TOUR_PAD;
+    arrowClass = 'arrow-right';
+  } else if (pos === 'bottom' && sp.top + sp.height + gap + cardH < vh) {
+    top  = sp.top + sp.height + gap;
+    left = sp.left + TOUR_PAD;
+    arrowClass = 'arrow-top';
+  } else if (pos === 'top' && sp.top - gap - cardH > 0) {
+    top  = sp.top - gap - cardH;
+    left = sp.left + TOUR_PAD;
+    arrowClass = 'arrow-bottom';
+  } else {
+    // Fallback cascade: right → left → bottom → top
+    if (sp.left + sp.width + gap + cardW < vw) {
+      left = sp.left + sp.width + gap; top = sp.top + TOUR_PAD; arrowClass = 'arrow-left';
+    } else if (sp.left - gap - cardW > 0) {
+      left = sp.left - gap - cardW; top = sp.top + TOUR_PAD; arrowClass = 'arrow-right';
+    } else if (sp.top + sp.height + gap + cardH < vh) {
+      top = sp.top + sp.height + gap; left = sp.left + TOUR_PAD; arrowClass = 'arrow-top';
+    } else {
+      top = sp.top - gap - cardH; left = sp.left + TOUR_PAD; arrowClass = 'arrow-bottom';
+    }
+  }
+
+  // Clamp to viewport with margin
+  left = Math.max(8, Math.min(left, vw - cardW - 8));
+  top  = Math.max(8, Math.min(top,  vh - cardH - 8));
+
+  card.style.top       = top  + 'px';
+  card.style.left      = left + 'px';
+  card.style.transform = 'none';
+  card.classList.add(arrowClass);
+}
+
+function renderTourStep() {
+  const step = TOUR_STEPS[tourStep];
+  document.getElementById('tourContent').innerHTML =
+    `<div class="tour-heading">${step.heading}</div><div class="tour-body">${step.body}</div>`;
+
+  // Dots
+  document.getElementById('tourDots').innerHTML = TOUR_STEPS.map((_, i) =>
+    `<span class="${i === tourStep ? 'active' : ''}"></span>`).join('');
+
+  // Prev button
+  document.getElementById('tourPrev').hidden = tourStep === 0;
+
+  // Next / Get Started button
+  const next  = document.getElementById('tourNext');
+  const isLast = tourStep === TOUR_STEPS.length - 1;
+  next.textContent = isLast ? 'Get Started' : 'Next →';
+  next.onclick = isLast ? closeTutorial : () => tourNav(1);
+
+  positionTourCard();
+}
+
+function tourNav(dir) {
+  tourStep = Math.max(0, Math.min(TOUR_STEPS.length - 1, tourStep + dir));
+  renderTourStep();
+}
+
+function openTutorial() {
+  tourStep = 0;
+  document.getElementById('tourOverlay').classList.add('active');
+  document.getElementById('tourCard').classList.add('active');
+  renderTourStep();
+}
+
+function closeTutorial() {
+  document.getElementById('tourOverlay').classList.remove('active');
+  document.getElementById('tourSpotlight').classList.remove('active');
+  document.getElementById('tourCard').classList.remove('active');
+  localStorage.setItem('miniRetPlanner_tutorial_seen', 'true');
+}
+
+// Reposition card on window resize
+window.addEventListener('resize', () => {
+  if (document.getElementById('tourCard').classList.contains('active')) {
+    positionTourCard();
+  }
+});
+
+// Escape key closes tour
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeTutorial();
+});
+
 // Wire all inputs
 document.querySelectorAll('input[type="number"]').forEach(el => {
   el.addEventListener('input', recalc);
@@ -790,6 +1210,10 @@ document.getElementById('savingsToggle').addEventListener('change', function() {
 
 renderMiniRets();
 recalc();
+
+if (!localStorage.getItem('miniRetPlanner_tutorial_seen')) {
+  openTutorial();
+}
 </script>
 </body>
 </html>
